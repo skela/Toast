@@ -5,6 +5,7 @@ using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using System.Diagnostics;
 using MonoTouch.ObjCRuntime;
+using MonoTouch.CoreGraphics;
 
 namespace MonoTouch.Toast
 {
@@ -261,6 +262,81 @@ namespace MonoTouch.Toast
 
 		#region View Creation
 
+		public class WrapperView : UIView
+		{
+			public WrapperView() : base()
+			{
+				M_PI = (float)Math.PI;
+				M_PI2 = M_PI/2.0f;
+			}
+
+			float M_PI;
+			float M_PI2;
+
+			public override void WillMoveToSuperview(UIView superView)
+			{
+				base.WillMoveToSuperview(superView);
+				NSNotificationCenter.DefaultCenter.AddObserver(UIDevice.OrientationDidChangeNotification,OrientationChanged);
+			}
+			
+			public override void RemoveFromSuperview ()
+			{
+				base.RemoveFromSuperview ();
+				NSNotificationCenter.DefaultCenter.RemoveObserver(this,UIDevice.OrientationDidChangeNotification,null);
+			}
+
+			void OrientationChanged(NSNotification notification)
+			{
+				HandleOrientationChanged();
+			}
+			
+			protected virtual void HandleOrientationChanged()
+			{
+				SetNeedsLayout();
+			}
+
+			public override void LayoutSubviews()
+			{
+				base.LayoutSubviews();
+				
+				CenterAndRotateView(this,animated:true);
+			}
+
+			private void CenterAndRotateView(UIView v,bool animated,bool shouldCentre=true,bool shouldRotate=true)
+			{
+				if (animated)
+					UIView.BeginAnimations("Layout WrapperView");
+				
+				float angle = 0.0f;
+				if (shouldRotate)
+				{
+					UIInterfaceOrientation orientation = UIApplication.SharedApplication.StatusBarOrientation;							
+					switch (orientation) 
+					{
+						case UIInterfaceOrientation.PortraitUpsideDown:
+							angle = M_PI; 
+							break;
+						case UIInterfaceOrientation.LandscapeLeft:
+							angle = - M_PI2;
+							break;
+						case UIInterfaceOrientation.LandscapeRight:
+							angle = M_PI2;
+							break;
+						default:
+							angle = 0.0f;
+							break;
+					}
+				}
+				if (shouldCentre)
+					v.Center = this.Center;
+				if (shouldRotate)
+					v.Transform = CGAffineTransform.MakeRotation(angle);
+				
+				if (animated)
+					UIView.CommitAnimations();
+			}
+		}
+
 		public static UIView MakeViewForMessage(this UIView self,string message,string title,UIImage image)
 		{
 			
@@ -277,7 +353,7 @@ namespace MonoTouch.Toast
 			UIImageView imageView = null;
 
 			// create the parent view
-			UIView wrapperView = new UIView();
+			WrapperView wrapperView = new WrapperView();
 			wrapperView.AutoresizingMask=(UIViewAutoresizing.FlexibleLeftMargin | UIViewAutoresizing.FlexibleRightMargin | UIViewAutoresizing.FlexibleTopMargin | UIViewAutoresizing.FlexibleBottomMargin);
 			wrapperView.Layer.CornerRadius=kCornerRadius;
 			if (kDisplayShadow) 
