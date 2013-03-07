@@ -34,6 +34,7 @@
 
 // each makeToast method creates a view and displays it as toast
 - (void)makeToast:(NSString *)message;
+- (void)makeToast:(NSString *)message atPoint:(CGPoint)point;
 - (void)makeToast:(NSString *)message duration:(CGFloat)interval position:(id)position;
 - (void)makeToast:(NSString *)message duration:(CGFloat)interval position:(id)position title:(NSString *)title;
 - (void)makeToast:(NSString *)message duration:(CGFloat)interval position:(id)position title:(NSString *)title image:(UIImage *)image;
