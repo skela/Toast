@@ -36,6 +36,7 @@
 
 static NSString *kDurationKey = @"CSToastDurationKey";
 
+@interface WrapperView : UIView @end
 
 @interface UIView (ToastPrivate)
 
@@ -261,7 +262,7 @@ static NSString *kDurationKey = @"CSToastDurationKey";
     UIImageView *imageView = nil;
     
     // create the parent view
-    UIView *wrapperView = [[UIView alloc] init];
+    UIView *wrapperView = [[WrapperView alloc] init];
 #if !__has_feature(objc_arc)
     [wrapperView autorelease];
 #endif
@@ -384,6 +385,91 @@ static NSString *kDurationKey = @"CSToastDurationKey";
     }
         
     return wrapperView;
+}
+
+@end
+
+#pragma mark - WrapperView
+
+// Handles the orientation changes.
+
+@implementation WrapperView
+
+- (id)init
+{
+    self = [super init];
+    if (self)
+    {
+        M_PI2 = M_PI/2.0f;
+    }
+    return self;
+}
+
+float M_PI2;
+
+- (void)willMoveToSuperview:(UIView *)newSuperview
+{
+    [super willMoveToSuperview:newSuperview];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
+}
+
+- (void)removeFromSuperview
+{
+    [super removeFromSuperview];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
+}
+
+- (void)orientationChanged:(NSNotification*)n
+{
+    [self handleOrientationChanged];
+}
+
+- (void)handleOrientationChanged
+{
+    [self setNeedsLayout];
+}
+
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    [self centerAndRotateView:self animated:YES];
+}
+
+- (void)centerAndRotateView:(UIView*)v animated:(BOOL)animated
+{
+    [self centerAndRotateView:self animated:animated shouldCentre:YES shouldRotate:YES];    
+}
+
+- (void)centerAndRotateView:(UIView*)v animated:(BOOL)animated shouldCentre:(BOOL)shouldCentre shouldRotate:(BOOL)shouldRotate
+{
+    if (animated) [UIView beginAnimations:@"Layout WrapperView" context:nil];
+    
+    float angle = 0.0f;
+    if (shouldRotate)
+    {
+        UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+        switch (orientation)
+        {
+            case UIInterfaceOrientationPortraitUpsideDown:
+                angle = M_PI;
+                break;
+            case UIInterfaceOrientationLandscapeLeft:
+                angle = - M_PI2;
+                break;
+            case UIInterfaceOrientationLandscapeRight:
+                angle = M_PI2;
+                break;
+            default:
+                angle = 0.0f;
+                break;
+        }
+    }
+
+    if (shouldCentre) v.center = self.center;
+    
+    if (shouldRotate) v.transform = CGAffineTransformMakeRotation(angle);
+    
+    if (animated) [UIView commitAnimations];
 }
 
 @end
