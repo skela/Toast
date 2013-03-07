@@ -49,11 +49,18 @@ static NSString *kDurationKey = @"CSToastDurationKey";
 
 #pragma mark - Toast Methods
 
-- (void)makeToast:(NSString *)message {
+- (void)makeToast:(NSString *)message
+{
     [self makeToast:message duration:kDefaultLength position:kDefaultPosition];
 }
 
-- (void)makeToast:(NSString *)message duration:(CGFloat)interval position:(id)position {
+- (void)makeToast:(NSString *)message atPoint:(CGPoint)point
+{    
+    [self makeToast:message duration:kDefaultLength position:[NSValue valueWithCGPoint:point]];
+}
+
+- (void)makeToast:(NSString *)message duration:(CGFloat)interval position:(id)position
+{
     UIView *toast = [self makeViewForMessage:message title:nil image:nil];
     [self showToast:toast duration:interval position:position];  
 }
@@ -100,6 +107,7 @@ static NSString *kDurationKey = @"CSToastDurationKey";
     [UIView beginAnimations:@"fade_in" context:(__bridge void*)toast];
     #endif
     [UIView setAnimationDuration:kFadeDuration];
+    
     [UIView setAnimationDelegate:self];
     [UIView setAnimationDidStopSelector:@selector(animationDidStop:finished:context:)];
     [UIView setAnimationCurve:UIViewAnimationCurveEaseOut];
@@ -177,11 +185,12 @@ static NSString *kDurationKey = @"CSToastDurationKey";
     #else
     UIView *toast = (UIView *)(__bridge id)context;
     #endif
+    
     // retrieve the display interval associated with the view
     CGFloat interval = [(NSNumber *)objc_getAssociatedObject(toast, &kDurationKey) floatValue];
     
-    if([animationID isEqualToString:@"fade_in"])
-    {
+    if([animationID isEqualToString:@"fade_in"]) {
+        
         #if !__has_feature(objc_arc)
         [UIView beginAnimations:@"fade_out" context:toast];
         #else
@@ -224,8 +233,13 @@ static NSString *kDurationKey = @"CSToastDurationKey";
             return CGPointMake(self.bounds.size.width / 2, self.bounds.size.height / 2);
         }
         
-    } else if ([point isKindOfClass:[NSValue class]]) {
-        return [point CGPointValue];
+    }
+    else if ([point isKindOfClass:[NSValue class]])
+    {
+        CGPoint p = [point CGPointValue];
+        p.x=roundf(p.x);
+        p.y=roundf(p.y);
+        return p;
     }
     
     NSLog(@"Error: Invalid position for toast.");
