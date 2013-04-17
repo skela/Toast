@@ -327,6 +327,7 @@ static NSString *kDurationKey = @"CSToastDurationKey";
         [messageLabel setLineBreakMode:UILineBreakModeWordWrap];
         [messageLabel setTextColor:[UIColor whiteColor]];
         [messageLabel setBackgroundColor:[UIColor clearColor]];
+        [messageLabel setTextAlignment:UITextAlignmentCenter];
         [messageLabel setAlpha:1.0];
         [messageLabel setText:message];
         
