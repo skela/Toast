@@ -45,6 +45,32 @@ static NSString *kDurationKey = @"CSToastDurationKey";
 
 @end
 
+@interface LegacyHelper : NSObject
+
+@end
+
+@implementation LegacyHelper
+
++ (NSTextAlignment)leftTextAlignment
+{
+//    return UITextAlignmentLeft;
+    return NSTextAlignmentLeft;
+}
+
++ (NSTextAlignment)centerTextAlignment
+{
+    //return UITextAlignmentCenter;
+    return NSTextAlignmentCenter;
+}
+
++ (NSLineBreakMode)lineBreakModeWordWrap
+{
+    //return UILineBreakModeWordWrap;
+    return NSLineBreakByWordWrapping;
+}
+
+@end
+
 
 @implementation UIView (Toast)
 
@@ -304,8 +330,8 @@ static NSString *kDurationKey = @"CSToastDurationKey";
 #endif
         [titleLabel setNumberOfLines:kMaxTitleLines];
         [titleLabel setFont:[UIFont boldSystemFontOfSize:kFontSize]];
-        [titleLabel setTextAlignment:UITextAlignmentLeft];
-        [titleLabel setLineBreakMode:UILineBreakModeWordWrap];
+        [titleLabel setTextAlignment:[LegacyHelper leftTextAlignment]];
+        [titleLabel setLineBreakMode:[LegacyHelper lineBreakModeWordWrap]];
         [titleLabel setTextColor:[UIColor whiteColor]];
         [titleLabel setBackgroundColor:[UIColor clearColor]];
         [titleLabel setAlpha:1.0];
@@ -324,10 +350,10 @@ static NSString *kDurationKey = @"CSToastDurationKey";
 #endif
         [messageLabel setNumberOfLines:kMaxMessageLines];
         [messageLabel setFont:[UIFont systemFontOfSize:kFontSize]];
-        [messageLabel setLineBreakMode:UILineBreakModeWordWrap];
+        [messageLabel setLineBreakMode:[LegacyHelper lineBreakModeWordWrap]];
         [messageLabel setTextColor:[UIColor whiteColor]];
         [messageLabel setBackgroundColor:[UIColor clearColor]];
-        [messageLabel setTextAlignment:UITextAlignmentCenter];
+        [messageLabel setTextAlignment:[LegacyHelper centerTextAlignment]];
         [messageLabel setAlpha:1.0];
         [messageLabel setText:message];
         
