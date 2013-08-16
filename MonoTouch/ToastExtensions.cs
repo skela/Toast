@@ -306,12 +306,12 @@ namespace MonoTouch.Toast
 			{
 				if (animated)
 					UIView.BeginAnimations("Layout WrapperView");
-				
+
 				float angle = 0.0f;
-				if (shouldRotate)
+				if (shouldRotate && v.Superview is UIWindow)
 				{
 					UIInterfaceOrientation orientation = UIApplication.SharedApplication.StatusBarOrientation;							
-					switch (orientation) 
+					switch (orientation)
 					{
 						case UIInterfaceOrientation.PortraitUpsideDown:
 							angle = M_PI; 
