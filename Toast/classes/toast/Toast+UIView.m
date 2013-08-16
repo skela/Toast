@@ -36,6 +36,7 @@
 
 static NSString *kDurationKey = @"CSToastDurationKey";
 
+@interface WrapperView : UIView @end
 
 @interface UIView (ToastPrivate)
 
@@ -44,16 +45,49 @@ static NSString *kDurationKey = @"CSToastDurationKey";
 
 @end
 
+@interface LegacyHelper : NSObject
+
+@end
+
+@implementation LegacyHelper
+
++ (NSTextAlignment)leftTextAlignment
+{
+//    return UITextAlignmentLeft;
+    return NSTextAlignmentLeft;
+}
+
++ (NSTextAlignment)centerTextAlignment
+{
+    //return UITextAlignmentCenter;
+    return NSTextAlignmentCenter;
+}
+
++ (NSLineBreakMode)lineBreakModeWordWrap
+{
+    //return UILineBreakModeWordWrap;
+    return NSLineBreakByWordWrapping;
+}
+
+@end
+
 
 @implementation UIView (Toast)
 
 #pragma mark - Toast Methods
 
-- (void)makeToast:(NSString *)message {
+- (void)makeToast:(NSString *)message
+{
     [self makeToast:message duration:kDefaultLength position:kDefaultPosition];
 }
 
-- (void)makeToast:(NSString *)message duration:(CGFloat)interval position:(id)position {
+- (void)makeToast:(NSString *)message atPoint:(CGPoint)point
+{    
+    [self makeToast:message duration:kDefaultLength position:[NSValue valueWithCGPoint:point]];
+}
+
+- (void)makeToast:(NSString *)message duration:(CGFloat)interval position:(id)position
+{
     UIView *toast = [self makeViewForMessage:message title:nil image:nil];
     [self showToast:toast duration:interval position:position];  
 }
@@ -100,6 +134,7 @@ static NSString *kDurationKey = @"CSToastDurationKey";
     [UIView beginAnimations:@"fade_in" context:(__bridge void*)toast];
     #endif
     [UIView setAnimationDuration:kFadeDuration];
+    
     [UIView setAnimationDelegate:self];
     [UIView setAnimationDidStopSelector:@selector(animationDidStop:finished:context:)];
     [UIView setAnimationCurve:UIViewAnimationCurveEaseOut];
@@ -177,11 +212,12 @@ static NSString *kDurationKey = @"CSToastDurationKey";
     #else
     UIView *toast = (UIView *)(__bridge id)context;
     #endif
+    
     // retrieve the display interval associated with the view
     CGFloat interval = [(NSNumber *)objc_getAssociatedObject(toast, &kDurationKey) floatValue];
     
-    if([animationID isEqualToString:@"fade_in"])
-    {
+    if([animationID isEqualToString:@"fade_in"]) {
+        
         #if !__has_feature(objc_arc)
         [UIView beginAnimations:@"fade_out" context:toast];
         #else
@@ -224,8 +260,13 @@ static NSString *kDurationKey = @"CSToastDurationKey";
             return CGPointMake(self.bounds.size.width / 2, self.bounds.size.height / 2);
         }
         
-    } else if ([point isKindOfClass:[NSValue class]]) {
-        return [point CGPointValue];
+    }
+    else if ([point isKindOfClass:[NSValue class]])
+    {
+        CGPoint p = [point CGPointValue];
+        p.x=roundf(p.x);
+        p.y=roundf(p.y);
+        return p;
     }
     
     NSLog(@"Error: Invalid position for toast.");
@@ -247,7 +288,7 @@ static NSString *kDurationKey = @"CSToastDurationKey";
     UIImageView *imageView = nil;
     
     // create the parent view
-    UIView *wrapperView = [[UIView alloc] init];
+    UIView *wrapperView = [[WrapperView alloc] init];
 #if !__has_feature(objc_arc)
     [wrapperView autorelease];
 #endif
@@ -289,8 +330,8 @@ static NSString *kDurationKey = @"CSToastDurationKey";
 #endif
         [titleLabel setNumberOfLines:kMaxTitleLines];
         [titleLabel setFont:[UIFont boldSystemFontOfSize:kFontSize]];
-        [titleLabel setTextAlignment:UITextAlignmentLeft];
-        [titleLabel setLineBreakMode:UILineBreakModeWordWrap];
+        [titleLabel setTextAlignment:[LegacyHelper leftTextAlignment]];
+        [titleLabel setLineBreakMode:[LegacyHelper lineBreakModeWordWrap]];
         [titleLabel setTextColor:[UIColor whiteColor]];
         [titleLabel setBackgroundColor:[UIColor clearColor]];
         [titleLabel setAlpha:1.0];
@@ -309,9 +350,10 @@ static NSString *kDurationKey = @"CSToastDurationKey";
 #endif
         [messageLabel setNumberOfLines:kMaxMessageLines];
         [messageLabel setFont:[UIFont systemFontOfSize:kFontSize]];
-        [messageLabel setLineBreakMode:UILineBreakModeWordWrap];
+        [messageLabel setLineBreakMode:[LegacyHelper lineBreakModeWordWrap]];
         [messageLabel setTextColor:[UIColor whiteColor]];
         [messageLabel setBackgroundColor:[UIColor clearColor]];
+        [messageLabel setTextAlignment:[LegacyHelper centerTextAlignment]];
         [messageLabel setAlpha:1.0];
         [messageLabel setText:message];
         
@@ -370,6 +412,91 @@ static NSString *kDurationKey = @"CSToastDurationKey";
     }
         
     return wrapperView;
+}
+
+@end
+
+#pragma mark - WrapperView
+
+// Handles the orientation changes.
+
+@implementation WrapperView
+
+- (id)init
+{
+    self = [super init];
+    if (self)
+    {
+        M_PI2 = M_PI/2.0f;
+    }
+    return self;
+}
+
+float M_PI2;
+
+- (void)willMoveToSuperview:(UIView *)newSuperview
+{
+    [super willMoveToSuperview:newSuperview];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
+}
+
+- (void)removeFromSuperview
+{
+    [super removeFromSuperview];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
+}
+
+- (void)orientationChanged:(NSNotification*)n
+{
+    [self handleOrientationChanged];
+}
+
+- (void)handleOrientationChanged
+{
+    [self setNeedsLayout];
+}
+
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    [self centerAndRotateView:self animated:YES];
+}
+
+- (void)centerAndRotateView:(UIView*)v animated:(BOOL)animated
+{
+    [self centerAndRotateView:self animated:animated shouldCentre:YES shouldRotate:YES];    
+}
+
+- (void)centerAndRotateView:(UIView*)v animated:(BOOL)animated shouldCentre:(BOOL)shouldCentre shouldRotate:(BOOL)shouldRotate
+{
+    if (animated) [UIView beginAnimations:@"Layout WrapperView" context:nil];
+    
+    float angle = 0.0f;
+    if (shouldRotate)
+    {
+        UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+        switch (orientation)
+        {
+            case UIInterfaceOrientationPortraitUpsideDown:
+                angle = M_PI;
+                break;
+            case UIInterfaceOrientationLandscapeLeft:
+                angle = - M_PI2;
+                break;
+            case UIInterfaceOrientationLandscapeRight:
+                angle = M_PI2;
+                break;
+            default:
+                angle = 0.0f;
+                break;
+        }
+    }
+
+    if (shouldCentre) v.center = self.center;
+    
+    if (shouldRotate) v.transform = CGAffineTransformMakeRotation(angle);
+    
+    if (animated) [UIView commitAnimations];
 }
 
 @end
