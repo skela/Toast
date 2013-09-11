@@ -42,38 +42,71 @@ namespace MonoTouch.Toast
 			Short
 		}
 
+		public class ToastPosition
+		{
+			public String String;
+			public PointF Point;
+			public bool HasPoint;
+
+			public ToastPosition(String pos)
+			{
+				HasPoint = false;
+				String = pos;
+			}
+
+			public ToastPosition(PointF pos)
+			{
+				String = null;
+				Point = pos;
+				HasPoint = true;
+			}
+		}
+
 		#endregion
 
 		#region Show Toast Methods
 
 		public static void ShowToast (this UIView self,String message,ToastLength toastLength,string position=kActivityDefaultPosition,string title=null,UIImage image=null)
 		{
-			double duration=kDefaultLength;
-			switch (toastLength)
-			{
-				case ToastLength.Long: duration = kDefaultLengthLong; break;
-				case ToastLength.Short: duration = kDefaultLengthShort; break;
-			}
-			self.ShowToast(message,duration,position,title,image);
+			UIView toast = self.MakeViewForMessage(message,title,image);
+			self.ShowToastViewAtPosition(toast,DurationFromToastLength(toastLength),position);
+		}
+
+		public static void ShowToast (this UIView self,String message,double duration,string position=kActivityDefaultPosition,string title=null,UIImage image=null)
+		{
+			UIView toast = self.MakeViewForMessage(message,title,image);
+			self.ShowToastViewAtPosition(toast,duration,position);
+		}
+
+		public static void ShowToast (this UIView self,String message,string position=kActivityDefaultPosition,string title=null,UIImage image=null)
+		{
+			UIView toast = self.MakeViewForMessage(message,title,image);
+			self.ShowToastViewAtPosition(toast,kDefaultLength,position);
 		}
 
 		public static void ShowToast (this UIView self,String message,ToastLength toastLength,PointF position,string title=null,UIImage image=null)
 		{
-			self.ShowToast(message,toastLength,position.ToString(),title,image);
+			UIView toast = self.MakeViewForMessage(message,title,image);
+			self.ShowToastViewAtPosition(toast,DurationFromToastLength(toastLength),position);
 		}
 
-		public static void ShowToast (this UIView self,String message,PointF position,double duration=kDefaultLength,string title=null,UIImage image=null)
-		{
-			self.ShowToast(message,duration,position.ToString(),title,image);
-		}
-
-		public static void ShowToast (this UIView self,String message,double duration=kDefaultLength,string position=kActivityDefaultPosition,string title=null,UIImage image=null)
+		public static void ShowToast (this UIView self,String message,double duration,PointF position,string title=null,UIImage image=null)
 		{
 			UIView toast = self.MakeViewForMessage(message,title,image);
-			self.ShowToast(toast,duration,position);
+			self.ShowToastViewAtPosition(toast,duration,position);
 		}
 
-		public static void ShowToast(this UIView self,UIView toast,double interval=kDefaultLength,string position=kActivityDefaultPosition)
+		public static void ShowToastViewAtPosition(this UIView self,UIView toast,double interval,string position)
+		{
+			self.ShowToastViewAtPosition (toast,interval,new ToastPosition(position));
+		}
+
+		public static void ShowToastViewAtPosition(this UIView self,UIView toast,double interval,PointF position)
+		{
+			self.ShowToastViewAtPosition (toast,interval,new ToastPosition(position));
+		}
+
+		public static void ShowToastViewAtPosition(this UIView self,UIView toast,double interval,ToastPosition position)
 		{
 			/****************************************************
 		     *                                                  *
@@ -113,7 +146,7 @@ namespace MonoTouch.Toast
 			}
 		
 			UIView activityContainer = new UIView(CGRectMake(0, 0, kActivityWidth, kActivityHeight));
-			activityContainer.Center = self.GetPositionFor(position,activityContainer);
+			activityContainer.Center = self.GetPositionFor(new ToastPosition(position),activityContainer);
 			activityContainer.BackgroundColor = UIColor.Black.ColorWithAlpha(kOpacity);
 			activityContainer.Alpha = 0.0f;
 			activityContainer.Tag = kActivityTag;
@@ -210,8 +243,19 @@ namespace MonoTouch.Toast
 			SizeF s = new SizeF(width,height);
 			return s;
 		}
-		
-		private static PointF GetPositionFor(this UIView self,string point,UIView toast)
+
+		private static double DurationFromToastLength(ToastLength toastLength)
+		{
+			double duration=kDefaultLength;
+			switch (toastLength)
+			{
+				case ToastLength.Long: duration = kDefaultLengthLong; break;
+				case ToastLength.Short: duration = kDefaultLengthShort; break;
+			}
+			return duration;
+		}
+
+		private static PointF GetPositionFor(this UIView self,ToastPosition point,UIView toast)
 		{
 			/*************************************************************************************
 		     *                                                                                   *
@@ -219,43 +263,31 @@ namespace MonoTouch.Toast
 		     * NSValue object into a CGPoint                                                     *
 		     *                                                                                   *
 		     *************************************************************************************/
-			
-			string pointS = point.ToLower();
-			
-			if (pointS.Equals("top"))
+
+			if (point.HasPoint)
 			{
-				return CGPointMake(self.Bounds.Size.Width/2, (toast.Frame.Size.Height / 2) + kVerticalPadding);
-			}
-			else if (pointS.Equals("bottom"))
-			{
-				return CGPointMake(self.Bounds.Size.Width/2, (self.Bounds.Size.Height - (toast.Frame.Size.Height / 2)) - kVerticalPadding);
-			}
-			else if (pointS.Equals("center") || pointS.Equals("centre"))
-			{
-				return CGPointMake(self.Bounds.Size.Width / 2, self.Bounds.Size.Height / 2);
+				return point.Point;
 			}
 			else
 			{
-				if (point.StartsWith("{X=") && point.EndsWith("}") && point.Contains(","))
+				string pointS = point.String.ToLower ();
+
+				if (pointS.Equals("top"))
 				{
-					int commaIndex=point.IndexOf(",");
-					int yEqualsIndex=point.IndexOf("Y=");
-					if (commaIndex!=-1 && yEqualsIndex!=-1)
-					{
-						yEqualsIndex=yEqualsIndex+2;
-						String xString=point.Substring(3,commaIndex-3);
-						String yString=point.Substring(yEqualsIndex,point.Length-yEqualsIndex-1);
-						float x,y;
-						if (float.TryParse(xString,out x) && float.TryParse(yString,out y))
-						{
-							return CGPointMake(x,y);
-						}
-					}
+					return CGPointMake(self.Bounds.Size.Width/2, (toast.Frame.Size.Height / 2) + kVerticalPadding);
+				}
+				else if (pointS.Equals("bottom"))
+				{
+					return CGPointMake(self.Bounds.Size.Width/2, (self.Bounds.Size.Height - (toast.Frame.Size.Height / 2)) - kVerticalPadding);
+				}
+				else if (pointS.Equals("center") || pointS.Equals("centre"))
+				{
+					return CGPointMake(self.Bounds.Size.Width / 2, self.Bounds.Size.Height / 2);
 				}
 			}
 			
 			Debug.WriteLine("Error: Invalid position for toast.");
-			return self.GetPositionFor(kDefaultPosition,toast);
+			return self.GetPositionFor(new ToastPosition(kDefaultPosition),toast);
 		}
 		
 		#endregion
