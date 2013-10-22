@@ -395,7 +395,9 @@ namespace MonoTouch.Toast
 				wrapperView.Layer.ShadowRadius=6.0f;
 				wrapperView.Layer.ShadowOffset=CGSizeMake(4.0f, 4.0f);
 			}
-			
+
+			wrapperView.UserInteractionEnabled = false;
+
 			wrapperView.BackgroundColor=UIColor.Black.ColorWithAlpha(kOpacity);
 
 			if(image != null) 
