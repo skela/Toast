@@ -119,6 +119,7 @@ namespace MonoTouch.Toast
 			ToastAnimationHolder holder = new ToastAnimationHolder(interval);
 
 			toast.Center = toastPoint;
+			toast.Frame = CGRectMake (toast.Frame.X, toast.Frame.Y, toast.Frame.Width, toast.Frame.Height);
 			toast.Alpha = 0.0f;
 			self.AddSubview(toast);
 
@@ -225,22 +226,27 @@ namespace MonoTouch.Toast
 		#endregion
 
 		#region Private Methods
-		
+
+		private static float Round(float val)
+		{
+			return (float)Math.Round ((double)val);
+		}
+
 		private static PointF CGPointMake(float x,float y)
 		{
-			PointF p = new PointF(x,y);
+			PointF p = new PointF(Round(x),Round(y));
 			return p;
 		}
 		
 		private static RectangleF CGRectMake(float x,float y,float width,float height)
 		{
-			RectangleF f = new RectangleF(x,y,width,height);
+			RectangleF f = new RectangleF(Round(x),Round(y),Round(width),Round(height));
 			return f;
 		}
 		
 		private static SizeF CGSizeMake(float width,float height)
 		{
-			SizeF s = new SizeF(width,height);
+			SizeF s = new SizeF(Round(width),Round(height));
 			return s;
 		}
 
@@ -266,7 +272,10 @@ namespace MonoTouch.Toast
 
 			if (point.HasPoint)
 			{
-				return point.Point;
+				PointF p = point.Point;
+				p.X = Round (p.X);
+				p.Y = Round (p.Y);
+				return p;
 			}
 			else
 			{
