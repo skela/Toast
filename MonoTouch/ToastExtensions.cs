@@ -229,7 +229,7 @@ namespace MonoTouch.Toast
 
 		private static float Round(float val)
 		{
-			return (float)Math.Round ((double)val);
+			return (float)Math.Ceiling ((double)val);
 		}
 
 		private static PointF CGPointMake(float x,float y)
@@ -305,6 +305,28 @@ namespace MonoTouch.Toast
 
 		public class WrapperView : UIView
 		{
+			UIImageView imageView;
+			UILabel messageLabel;
+			UILabel titleLabel;
+
+			public void AddImageView (UIImageView imageview)
+			{
+				imageView = imageview;
+				AddSubview (imageView);
+			}
+
+			public void AddMessageLabel (UILabel messagelabel)
+			{
+				messageLabel = messagelabel;
+				AddSubview (messageLabel);
+			}
+
+			public void AddTitleLabel (UILabel titlelabel)
+			{
+				titleLabel = titlelabel;
+				AddSubview (titleLabel);
+			}
+
 			public WrapperView() : base()
 			{
 				M_PI = (float)Math.PI;
@@ -341,6 +363,63 @@ namespace MonoTouch.Toast
 				base.LayoutSubviews();
 				
 				CenterAndRotateView(this,animated:true);
+
+				float imageWidth, imageHeight, imageLeft;
+				if(imageView != null) 
+				{
+					imageWidth = imageView.Bounds.Size.Width;
+					imageHeight = imageView.Bounds.Size.Height;
+					imageLeft = kHorizontalPadding;
+				} 
+				else 
+				{
+					imageWidth = imageHeight = imageLeft = 0.0f;
+				}
+
+				// titleLabel frame values
+				float titleWidth, titleHeight, titleTop, titleLeft;
+
+				if(titleLabel != null) 
+				{
+					titleWidth = titleLabel.Bounds.Size.Width;
+					titleHeight = titleLabel.Bounds.Size.Height;
+					titleTop = kVerticalPadding;
+					titleLeft = imageLeft + imageWidth + kHorizontalPadding;
+				}
+				else 
+				{
+					titleWidth = titleHeight = titleTop = titleLeft = 0.0f;
+				}
+
+				// messageLabel frame values
+				float messageWidth, messageHeight, messageLeft, messageTop;
+
+				if(messageLabel != null) 
+				{
+					messageWidth = messageLabel.Bounds.Size.Width;
+					messageHeight = messageLabel.Bounds.Size.Height;
+					messageLeft = imageLeft + imageWidth + kHorizontalPadding;
+					messageTop = titleTop + titleHeight + kVerticalPadding;
+				}
+				else 
+				{
+					messageWidth = messageHeight = messageLeft = messageTop = 0.0f;
+				}			
+
+				float longerWidth = Math.Max(titleWidth, messageWidth);
+				float longerLeft = Math.Max(titleLeft, messageLeft);
+
+				if(titleLabel != null) 
+				{
+					titleLabel.Frame=CGRectMake(titleLeft, titleTop, titleWidth, titleHeight);
+				}
+
+				if(messageLabel != null) 
+				{
+					messageLabel.Frame=CGRectMake(messageLeft, messageTop, messageWidth, messageHeight);
+				}
+
+				int k = 0;
 			}
 
 			private void CenterAndRotateView(UIView v,bool animated,bool shouldCentre=true,bool shouldRotate=true)
@@ -409,22 +488,16 @@ namespace MonoTouch.Toast
 
 			wrapperView.BackgroundColor=UIColor.Black.ColorWithAlpha(kOpacity);
 
+			float imageWidth, imageHeight, imageLeft;
 			if(image != null) 
 			{
 				imageView = new UIImageView(image);
 				imageView.ContentMode=UIViewContentMode.ScaleAspectFit;
 				imageView.Frame=CGRectMake(kHorizontalPadding, kVerticalPadding, kImageWidth, kImageHeight);
-			}
-			
-			float imageWidth, imageHeight, imageLeft;
-			
-			// the imageView frame values will be used to size & position the other views
-			if(imageView != null) 
-			{
 				imageWidth = imageView.Bounds.Size.Width;
 				imageHeight = imageView.Bounds.Size.Height;
 				imageLeft = kHorizontalPadding;
-			} 
+			}
 			else 
 			{
 				imageWidth = imageHeight = imageLeft = 0.0f;
@@ -454,6 +527,7 @@ namespace MonoTouch.Toast
 				messageLabel = new UILabel();
 				messageLabel.Lines=kMaxMessageLines;
 				messageLabel.Font=UIFont.SystemFontOfSize(kFontSize);
+				messageLabel.AutoresizingMask = UIViewAutoresizing.None;
 				messageLabel.LineBreakMode=UILineBreakMode.WordWrap;
 				messageLabel.TextColor=UIColor.White;
 				messageLabel.BackgroundColor=UIColor.Clear;
@@ -464,7 +538,7 @@ namespace MonoTouch.Toast
 				NSString messageS = new NSString(message);
 				SizeF maxSizeMessage = CGSizeMake((self.Bounds.Size.Width * kMaxWidth) - imageWidth, self.Bounds.Size.Height * kMaxHeight);
 				SizeF expectedSizeMessage = messageS.StringSize(messageLabel.Font,maxSizeMessage,messageLabel.LineBreakMode);
-				messageLabel.Frame=CGRectMake(0.0f, 0.0f, expectedSizeMessage.Width, expectedSizeMessage.Height);
+				messageLabel.Frame=CGRectMake(0.0f, 0.0f,Round(expectedSizeMessage.Width),Round(expectedSizeMessage.Height));
 			}
 			
 			// titleLabel frame values
@@ -508,19 +582,17 @@ namespace MonoTouch.Toast
 			
 			if(titleLabel != null) 
 			{
-				titleLabel.Frame=CGRectMake(titleLeft, titleTop, titleWidth, titleHeight);
-				wrapperView.AddSubview(titleLabel);
+				wrapperView.AddTitleLabel(titleLabel);
 			}
 			
 			if(messageLabel != null) 
 			{
-				messageLabel.Frame=CGRectMake(messageLeft, messageTop, messageWidth, messageHeight);
-				wrapperView.AddSubview(messageLabel);
+				wrapperView.AddMessageLabel(messageLabel);
 			}
 			
 			if(imageView != null) 
 			{
-				wrapperView.AddSubview(imageView);
+				wrapperView.AddImageView (imageView);
 			}
 			
 			return wrapperView;
