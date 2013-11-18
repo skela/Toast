@@ -406,9 +406,6 @@ namespace MonoTouch.Toast
 					messageWidth = messageHeight = messageLeft = messageTop = 0.0f;
 				}			
 
-				float longerWidth = Math.Max(titleWidth, messageWidth);
-				float longerLeft = Math.Max(titleLeft, messageLeft);
-
 				if(titleLabel != null) 
 				{
 					titleLabel.Frame=CGRectMake(titleLeft, titleTop, titleWidth, titleHeight);
@@ -418,8 +415,6 @@ namespace MonoTouch.Toast
 				{
 					messageLabel.Frame=CGRectMake(messageLeft, messageTop, messageWidth, messageHeight);
 				}
-
-				int k = 0;
 			}
 
 			private void CenterAndRotateView(UIView v,bool animated,bool shouldCentre=true,bool shouldRotate=true)
