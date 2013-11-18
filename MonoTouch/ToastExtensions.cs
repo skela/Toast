@@ -35,6 +35,7 @@ namespace MonoTouch.Toast
 		public const float  kActivityHeight = 100.0f;
 		public const string  kActivityDefaultPosition = "center";
 		public const int  kActivityTag = 91325;
+		public static UITextAlignment TextAlignment = UITextAlignment.Left;
 
 		public enum ToastLength
 		{
@@ -509,6 +510,7 @@ namespace MonoTouch.Toast
 				titleLabel.BackgroundColor=UIColor.Clear;
 				titleLabel.Alpha=1.0f;
 				titleLabel.Text=title;
+				titleLabel.TextAlignment = TextAlignment;
 
 				NSString titleS = new NSString(title);
 				// size the title label according to the length of the text
@@ -528,7 +530,8 @@ namespace MonoTouch.Toast
 				messageLabel.BackgroundColor=UIColor.Clear;
 				messageLabel.Alpha=1.0f;
 				messageLabel.Text=message;
-				
+				messageLabel.TextAlignment = TextAlignment;
+
 				// size the message label according to the length of the text
 				NSString messageS = new NSString(message);
 				SizeF maxSizeMessage = CGSizeMake((self.Bounds.Size.Width * kMaxWidth) - imageWidth, self.Bounds.Size.Height * kMaxHeight);
