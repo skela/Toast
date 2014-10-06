@@ -36,6 +36,7 @@ namespace MonoTouch.Toast
 		public const float  kActivityHeight = 100.0f;
 		public const string  kActivityDefaultPosition = "center";
 		public const int  kActivityTag = 91325;
+		public static UITextAlignment TextAlignment = UITextAlignment.Left;
 
 		public enum ToastLength
 		{
@@ -441,9 +442,6 @@ namespace MonoTouch.Toast
 					messageWidth = messageHeight = messageLeft = messageTop = 0.0f;
 				}			
 
-				float longerWidth = Math.Max(titleWidth, messageWidth);
-				float longerLeft = Math.Max(titleLeft, messageLeft);
-
 				if(titleLabel != null) 
 				{
 					titleLabel.Frame=CGRectMake(titleLeft, titleTop, titleWidth, titleHeight);
@@ -453,8 +451,6 @@ namespace MonoTouch.Toast
 				{
 					messageLabel.Frame=CGRectMake(messageLeft, messageTop, messageWidth, messageHeight);
 				}
-
-				int k = 0;
 			}
 
 			private void CenterAndRotateView(UIView v,bool animated,bool shouldCentre=true,bool shouldRotate=true)
@@ -549,6 +545,7 @@ namespace MonoTouch.Toast
 				titleLabel.BackgroundColor=UIColor.Clear;
 				titleLabel.Alpha=1.0f;
 				titleLabel.Text=title;
+				titleLabel.TextAlignment = TextAlignment;
 
 				NSString titleS = new NSString(title);
 				// size the title label according to the length of the text
@@ -568,7 +565,8 @@ namespace MonoTouch.Toast
 				messageLabel.BackgroundColor=UIColor.Clear;
 				messageLabel.Alpha=1.0f;
 				messageLabel.Text=message;
-				
+				messageLabel.TextAlignment = TextAlignment;
+
 				// size the message label according to the length of the text
 				NSString messageS = new NSString(message);
 				SizeF maxSizeMessage = CGSizeMake((self.Bounds.Size.Width * kMaxWidth) - imageWidth, self.Bounds.Size.Height * kMaxHeight);
