@@ -6,6 +6,7 @@ using MonoTouch.UIKit;
 using System.Diagnostics;
 using MonoTouch.ObjCRuntime;
 using MonoTouch.CoreGraphics;
+using System.Collections.Generic;
 
 namespace MonoTouch.Toast
 {
@@ -59,6 +60,38 @@ namespace MonoTouch.Toast
 				String = null;
 				Point = pos;
 				HasPoint = true;
+			}
+		}
+
+		public static float OperatingSystemVersion
+		{
+			get
+			{
+				string ver = UIDevice.CurrentDevice.SystemVersion;
+				float verF = 4.0f;
+				if (float.TryParse (ver, out verF))
+				{
+					return verF;
+				}
+
+				var ls = ver.Split ('.');
+				List<float> lf = new List<float> ();
+				foreach (string s in ls)
+					lf.Add (float.Parse (s));
+
+				if (lf.Count > 2)
+				{
+					verF = lf [0] + lf [1] * 0.1f + lf [2] * 0.01f;
+				}
+				else if (lf.Count > 1)
+				{
+					verF = lf [0] + lf [1] * 0.1f;
+				}
+				else if (lf.Count > 0)
+				{
+					verF = lf [0];
+				}
+				return verF;
 			}
 		}
 
@@ -331,10 +364,12 @@ namespace MonoTouch.Toast
 			{
 				M_PI = (float)Math.PI;
 				M_PI2 = M_PI/2.0f;
+				OSVersion = ToastExtensions.OperatingSystemVersion;
 			}
 
 			float M_PI;
 			float M_PI2;
+			float OSVersion;
 
 			public override void WillMoveToSuperview(UIView superView)
 			{
@@ -428,7 +463,7 @@ namespace MonoTouch.Toast
 					UIView.BeginAnimations("Layout WrapperView");
 
 				float angle = 0.0f;
-				if (shouldRotate && v.Superview is UIWindow)
+				if (shouldRotate && v.Superview is UIWindow && OSVersion<8)
 				{
 					UIInterfaceOrientation orientation = UIApplication.SharedApplication.StatusBarOrientation;							
 					switch (orientation)
