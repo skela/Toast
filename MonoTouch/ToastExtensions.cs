@@ -1,11 +1,10 @@
 using System;
-using System.Drawing;
+using CoreGraphics;
 
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using System.Diagnostics;
-using MonoTouch.ObjCRuntime;
-using MonoTouch.CoreGraphics;
+using ObjCRuntime;
 using System.Collections.Generic;
 
 namespace MonoTouch.Toast
@@ -47,7 +46,7 @@ namespace MonoTouch.Toast
 		public class ToastPosition
 		{
 			public String String;
-			public PointF Point;
+			public CGPoint Point;
 			public bool HasPoint;
 
 			public ToastPosition(String pos)
@@ -56,7 +55,7 @@ namespace MonoTouch.Toast
 				String = pos;
 			}
 
-			public ToastPosition(PointF pos)
+			public ToastPosition(CGPoint pos)
 			{
 				String = null;
 				Point = pos;
@@ -118,13 +117,13 @@ namespace MonoTouch.Toast
 			self.ShowToastViewAtPosition(toast,kDefaultLength,position);
 		}
 
-		public static void ShowToast (this UIView self,String message,ToastLength toastLength,PointF position,string title=null,UIImage image=null)
+		public static void ShowToast (this UIView self,String message,ToastLength toastLength,CGPoint position,string title=null,UIImage image=null)
 		{
 			UIView toast = self.MakeViewForMessage(message,title,image);
 			self.ShowToastViewAtPosition(toast,DurationFromToastLength(toastLength),position);
 		}
 
-		public static void ShowToast (this UIView self,String message,double duration,PointF position,string title=null,UIImage image=null)
+		public static void ShowToast (this UIView self,String message,double duration,CGPoint position,string title=null,UIImage image=null)
 		{
 			UIView toast = self.MakeViewForMessage(message,title,image);
 			self.ShowToastViewAtPosition(toast,duration,position);
@@ -135,7 +134,7 @@ namespace MonoTouch.Toast
 			self.ShowToastViewAtPosition (toast,interval,new ToastPosition(position));
 		}
 
-		public static void ShowToastViewAtPosition(this UIView self,UIView toast,double interval,PointF position)
+		public static void ShowToastViewAtPosition(this UIView self,UIView toast,double interval,CGPoint position)
 		{
 			self.ShowToastViewAtPosition (toast,interval,new ToastPosition(position));
 		}
@@ -148,7 +147,7 @@ namespace MonoTouch.Toast
 		     *                                                  *
 		     ****************************************************/
 			
-			PointF toastPoint = self.GetPositionFor(position,toast);
+			CGPoint toastPoint = self.GetPositionFor(position,toast);
 
 			ToastAnimationHolder holder = new ToastAnimationHolder(interval);
 
@@ -266,21 +265,38 @@ namespace MonoTouch.Toast
 			return (float)Math.Ceiling ((double)val);
 		}
 
-		private static PointF CGPointMake(float x,float y)
+		private static nfloat Round(nfloat val)
 		{
-			PointF p = new PointF(Round(x),Round(y));
+			return (nfloat)Math.Ceiling ((double)val);
+		}
+
+		private static CGPoint CGPointMake(float x,float y)
+		{
+			CGPoint p = new CGPoint(Round(x),Round(y));
 			return p;
 		}
 		
-		private static RectangleF CGRectMake(float x,float y,float width,float height)
+		private static CGPoint CGPointMake(nfloat x,nfloat y)
 		{
-			RectangleF f = new RectangleF(Round(x),Round(y),Round(width),Round(height));
+			CGPoint p = new CGPoint(Round(x),Round(y));
+			return p;
+		}
+
+		private static CGRect CGRectMake(nfloat x,nfloat y,nfloat width,nfloat height)
+		{
+			CGRect f = new CGRect(Round(x),Round(y),Round(width),Round(height));
 			return f;
 		}
 		
-		private static SizeF CGSizeMake(float width,float height)
+		private static CGSize CGSizeMake(float width,float height)
 		{
-			SizeF s = new SizeF(Round(width),Round(height));
+			CGSize s = new CGSize(Round(width),Round(height));
+			return s;
+		}
+
+		private static CGSize CGSizeMake(nfloat width,nfloat height)
+		{
+			CGSize s = new CGSize(Round(width),Round(height));
 			return s;
 		}
 
@@ -295,7 +311,7 @@ namespace MonoTouch.Toast
 			return duration;
 		}
 
-		private static PointF GetPositionFor(this UIView self,ToastPosition point,UIView toast)
+		private static CGPoint GetPositionFor(this UIView self,ToastPosition point,UIView toast)
 		{
 			/*************************************************************************************
 		     *                                                                                   *
@@ -306,7 +322,7 @@ namespace MonoTouch.Toast
 
 			if (point.HasPoint)
 			{
-				PointF p = point.Point;
+				CGPoint p = point.Point;
 				p.X = Round (p.X);
 				p.Y = Round (p.Y);
 				return p;
@@ -400,7 +416,7 @@ namespace MonoTouch.Toast
 				
 				CenterAndRotateView(this,animated:true);
 
-				float imageWidth, imageHeight, imageLeft;
+				nfloat imageWidth, imageHeight, imageLeft;
 				if(imageView != null) 
 				{
 					imageWidth = imageView.Bounds.Size.Width;
@@ -413,7 +429,7 @@ namespace MonoTouch.Toast
 				}
 
 				// titleLabel frame values
-				float titleWidth, titleHeight, titleTop, titleLeft;
+				nfloat titleWidth, titleHeight, titleTop, titleLeft;
 
 				if(titleLabel != null) 
 				{
@@ -428,7 +444,7 @@ namespace MonoTouch.Toast
 				}
 
 				// messageLabel frame values
-				float messageWidth, messageHeight, messageLeft, messageTop;
+				nfloat messageWidth, messageHeight, messageLeft, messageTop;
 
 				if(messageLabel != null) 
 				{
@@ -519,7 +535,7 @@ namespace MonoTouch.Toast
 
 			wrapperView.BackgroundColor=UIColor.Black.ColorWithAlpha(kOpacity);
 
-			float imageWidth, imageHeight, imageLeft;
+			nfloat imageWidth, imageHeight, imageLeft;
 			if(image != null) 
 			{
 				imageView = new UIImageView(image);
@@ -549,8 +565,8 @@ namespace MonoTouch.Toast
 
 				NSString titleS = new NSString(title);
 				// size the title label according to the length of the text
-				SizeF maxSizeTitle = CGSizeMake((self.Bounds.Size.Width * kMaxWidth) - imageWidth, self.Bounds.Size.Height * kMaxHeight);
-				SizeF expectedSizeTitle = titleS.StringSize(titleLabel.Font,maxSizeTitle,titleLabel.LineBreakMode);
+				CGSize maxSizeTitle = CGSizeMake((self.Bounds.Size.Width * kMaxWidth) - imageWidth, self.Bounds.Size.Height * kMaxHeight);
+				CGSize expectedSizeTitle = titleS.StringSize(titleLabel.Font,maxSizeTitle,titleLabel.LineBreakMode);
 				titleLabel.Frame=CGRectMake(0.0f, 0.0f, expectedSizeTitle.Width, expectedSizeTitle.Height);
 			}
 			
@@ -569,13 +585,13 @@ namespace MonoTouch.Toast
 
 				// size the message label according to the length of the text
 				NSString messageS = new NSString(message);
-				SizeF maxSizeMessage = CGSizeMake((self.Bounds.Size.Width * kMaxWidth) - imageWidth, self.Bounds.Size.Height * kMaxHeight);
-				SizeF expectedSizeMessage = messageS.StringSize(messageLabel.Font,maxSizeMessage,messageLabel.LineBreakMode);
+				CGSize maxSizeMessage = CGSizeMake((self.Bounds.Size.Width * kMaxWidth) - imageWidth, self.Bounds.Size.Height * kMaxHeight);
+				CGSize expectedSizeMessage = messageS.StringSize(messageLabel.Font,maxSizeMessage,messageLabel.LineBreakMode);
 				messageLabel.Frame=CGRectMake(0.0f, 0.0f,Round(expectedSizeMessage.Width),Round(expectedSizeMessage.Height));
 			}
 			
 			// titleLabel frame values
-			float titleWidth, titleHeight, titleTop, titleLeft;
+			nfloat titleWidth, titleHeight, titleTop, titleLeft;
 			
 			if(titleLabel != null) 
 			{
@@ -590,7 +606,7 @@ namespace MonoTouch.Toast
 			}
 			
 			// messageLabel frame values
-			float messageWidth, messageHeight, messageLeft, messageTop;
+			nfloat messageWidth, messageHeight, messageLeft, messageTop;
 			
 			if(messageLabel != null) 
 			{
@@ -604,14 +620,14 @@ namespace MonoTouch.Toast
 				messageWidth = messageHeight = messageLeft = messageTop = 0.0f;
 			}			
 
-			float longerWidth = Math.Max(titleWidth, messageWidth);
-			float longerLeft = Math.Max(titleLeft, messageLeft);
+			var longerWidth = Math.Max(titleWidth, messageWidth);
+			var longerLeft = Math.Max(titleLeft, messageLeft);
 			
 			// wrapper width uses the longerWidth or the image width, whatever is larger. same logic applies to the wrapper height
-			float wrapperWidth = Math.Max((imageWidth + (kHorizontalPadding * 2)), (longerLeft + longerWidth + kHorizontalPadding));    
-			float wrapperHeight = Math.Max((messageTop + messageHeight + kVerticalPadding), (imageHeight + (kVerticalPadding * 2)));
+			var wrapperWidth = Math.Max((imageWidth + (kHorizontalPadding * 2)), (longerLeft + longerWidth + kHorizontalPadding));    
+			var wrapperHeight = Math.Max((messageTop + messageHeight + kVerticalPadding), (imageHeight + (kVerticalPadding * 2)));
 			
-			wrapperView.Frame=CGRectMake(0.0f, 0.0f, wrapperWidth, wrapperHeight);
+			wrapperView.Frame=CGRectMake((nfloat)0.0, (nfloat)0.0, (nfloat)wrapperWidth, (nfloat)wrapperHeight);
 			
 			if(titleLabel != null) 
 			{
